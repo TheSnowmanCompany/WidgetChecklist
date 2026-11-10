@@ -1,0 +1,53 @@
+(function () {
+  var root = document.getElementById('ck');
+  if (!root) return;
+  var items = [];
+  try { items = JSON.parse(root.getAttribute('data-items') || '[]'); } catch (e) {}
+
+  root.innerHTML =
+    '<h2 class="sr-only">Checklist with editable items, an add field, and a send button</h2>' +
+    '<div class="ck-list" style="padding:1rem 0"></div>' +
+    '<div style="display:flex;gap:8px;margin:8px 0">' +
+      '<input class="ck-new" placeholder="Add your own" style="flex:1">' +
+      '<button class="ck-add">Add</button>' +
+    '</div>' +
+    '<p class="ck-err" style="font-size:13px;color:var(--text-danger);margin:0"></p>' +
+    '<button class="ck-send">Send \u2197</button>';
+
+  var list = root.querySelector('.ck-list');
+  var input = root.querySelector('.ck-new');
+  var err = root.querySelector('.ck-err');
+
+  function add(text) {
+    text = (text || '').trim();
+    if (!text) return;
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;margin:6px 0';
+    var box = document.createElement('input');
+    box.type = 'checkbox';
+    box.style.cssText = 'width:20px;height:20px';
+    var field = document.createElement('input');
+    field.value = text;
+    field.style.flex = '1';
+    row.appendChild(box);
+    row.appendChild(field);
+    list.appendChild(row);
+    err.textContent = '';
+  }
+
+  items.forEach(add);
+
+  root.querySelector('.ck-add').onclick = function () { add(input.value); input.value = ''; };
+  input.onkeydown = function (e) { if (e.key === 'Enter') { add(input.value); input.value = ''; } };
+
+  root.querySelector('.ck-send').onclick = function () {
+    var picked = [];
+    list.querySelectorAll('div').forEach(function (row) {
+      var parts = row.querySelectorAll('input');
+      if (parts[0].checked && parts[1].value.trim()) picked.push(parts[1].value.trim());
+    });
+    if (!picked.length) { err.textContent = 'Pick at least one first'; return; }
+    err.textContent = '';
+    sendPrompt('Picked: ' + picked.join('; '));
+  };
+})();
